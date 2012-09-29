@@ -1,0 +1,11 @@
+To make the make file
+%ruby extconf.rb
+
+The makefile will have the ruby library path added for the 
+version of ruby used to create the makefile.
+
+To create the ruby library
+%make
+
+To install
+%make install
