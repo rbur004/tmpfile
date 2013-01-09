@@ -8,6 +8,8 @@
 		FILE *fp;
 		char filename[256];
 		char flags[16];
+		int no_unlink;
 	} Tmpfile;
 
 #endif //TMPFILE
+
