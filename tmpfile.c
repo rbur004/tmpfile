@@ -3,6 +3,8 @@
 
 #include <ruby.h>
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -46,17 +48,17 @@ char *filename_p, *flags_p;
 
   rb_scan_args(argc, argv, "2", &filename, &flags);
   if(TYPE(filename) != T_STRING)
-    rb_raise(rb_eTypeError, "Filename should be a String"); 
+    rb_raise(rb_eTypeError, "tmp_initialize: Filename should be a String"); 
     
   if(TYPE(flags) != T_STRING)
-    rb_raise(rb_eTypeError, "Flags should be a String"); 
+    rb_raise(rb_eTypeError, "tmp_initialize: Flags should be a String"); 
     
   Data_Get_Struct(obj, Tmpfile, tf);
   
   filename_p = StringValuePtr(filename);
   flags_p = StringValuePtr(flags);
   if( ( fp = fopen(filename_p, flags_p)) == NULL)
-    rb_raise(rb_eArgError, strerror(errno));
+    rb_raise(rb_eArgError, "tmp_initialize: %s", strerror(errno));
     
   tf->fp = fp;
   strcpy(tf->filename, filename_p);
@@ -100,7 +102,7 @@ static VALUE tmp_each_line(VALUE obj, VALUE filename, VALUE flags)
   Data_Get_Struct(obj, Tmpfile, tf);
   
   if(tf->fp == NULL)
-    rb_raise(rb_eRuntimeError, "File not open!"); //need to change error type.
+    rb_raise(rb_eRuntimeError, "tmp_each_line: File not open!"); //need to change error type.
 
   if(rb_block_given_p()) //if we have a block.
   {
@@ -108,10 +110,10 @@ static VALUE tmp_each_line(VALUE obj, VALUE filename, VALUE flags)
       rb_yield(rb_str_new2(buffer)); //pass that line to the block.
     //we should have EOF.
     if(feof(tf->fp) == 0) //Then we had an io error, rather than eof.
-      rb_raise(rb_eRuntimeError, strerror(errno)); //need to change error type.
+      rb_raise(rb_eRuntimeError, "tmp_each_line: %s", strerror(errno)); //need to change error type.
   }
   else
-    rb_raise(rb_eRuntimeError, "no block given"); //need to change error type.
+    rb_raise(rb_eRuntimeError, "tmp_each_line: no block given"); //need to change error type.
 
   return obj; //return ourselves.
 }
@@ -125,12 +127,12 @@ static VALUE tmp_gets(VALUE obj)
   Data_Get_Struct(obj, Tmpfile, tf);
   
   if(tf->fp == NULL)
-    rb_raise(rb_eRuntimeError, "File not open!"); //need to change error type.
+    rb_raise(rb_eRuntimeError, "tmp_gets: File not open!"); //need to change error type.
 
     if(fgets(buffer,8192,tf->fp) == NULL) //read the next line.
     {
       if(feof(tf->fp) == 0) //Then we had an io error, rather than eof.
-        rb_raise(rb_eRuntimeError, strerror(errno)); //need to change error type. 
+        rb_raise(rb_eRuntimeError, "tmp_gets: %s", strerror(errno)); //need to change error type. 
       else
         return Qnil; //nothing more to read.
     }
@@ -147,7 +149,7 @@ static VALUE tmp_puts(int argc, VALUE *argv, VALUE obj)
   Data_Get_Struct(obj, Tmpfile, tf);
 
   if(tf->fp == NULL)
-    rb_raise(rb_eRuntimeError, "File not open!"); //need to change error type.
+    rb_raise(rb_eRuntimeError, "tmp_puts: File not open!"); //need to change error type.
 
   for(i = 0; i < argc; i++)
   {
@@ -161,13 +163,13 @@ static VALUE tmp_puts(int argc, VALUE *argv, VALUE obj)
       s = StringValuePtr(tmp);
     }
     
-    l = strlen(s);
+    l = (int)strlen(s);
     //only output if the string isn't empty.
     if(l && fputs(s, tf->fp) == EOF)
-      rb_raise(rb_eRuntimeError, strerror(errno)); //need to change error type.
+      rb_raise(rb_eRuntimeError, "tmp_puts: %s", strerror(errno)); //need to change error type.
     //Add a new line char if the string didn't end in one.
     if(l && s[l-1] != '\n' && fputs("\n", tf->fp) == EOF)
-      rb_raise(rb_eRuntimeError, strerror(errno)); //need to change error type.
+      rb_raise(rb_eRuntimeError, "tmp_puts: %s", strerror(errno)); //need to change error type.
   }
   
   return obj;
@@ -182,7 +184,7 @@ static VALUE tmp_print(int argc, VALUE *argv, VALUE obj)
   Data_Get_Struct(obj, Tmpfile, tf);
 
   if(tf->fp == NULL)
-    rb_raise(rb_eRuntimeError, "File not open!"); //need to change error type.
+    rb_raise(rb_eRuntimeError, "tmp_print: File not open!"); //need to change error type.
 
   for(i = 0; i < argc; i++)
   {
@@ -197,7 +199,7 @@ static VALUE tmp_print(int argc, VALUE *argv, VALUE obj)
     
     //only output if the string isn't empty.
     if(s[0] != '\0' && fputs(s, tf->fp) == EOF)
-      rb_raise(rb_eRuntimeError, strerror(errno)); //need to change error type.
+      rb_raise(rb_eRuntimeError, "tmp_print: %s", strerror(errno)); //need to change error type.
   }
   
   return obj;
@@ -209,10 +211,10 @@ static VALUE tmp_seek_end(VALUE obj)
 
   Data_Get_Struct(obj, Tmpfile, tf);
   if(tf->fp == NULL)
-    rb_raise(rb_eRuntimeError, "File not open!"); //need to change error type.
+    rb_raise(rb_eRuntimeError, "tmp_seek_end: File not open!"); //need to change error type.
 
   if(fseek(tf->fp,0,SEEK_END) == -1)  //go to the end of the file.
-    rb_raise(rb_eRuntimeError, "seek %s", strerror(errno));
+    rb_raise(rb_eRuntimeError, "tmp_seek_end.fseek %s", strerror(errno));
   return obj;
 }
 
@@ -222,10 +224,10 @@ static VALUE tmp_flush(VALUE obj)
 
   Data_Get_Struct(obj, Tmpfile, tf);
   if(tf->fp == NULL)
-    rb_raise(rb_eRuntimeError, "File not open!"); //need to change error type.
+    rb_raise(rb_eRuntimeError, "tmp_flush: File not open!"); //need to change error type.
 
   if(fflush(tf->fp)  == -1)
-    rb_raise(rb_eRuntimeError, "flush: %s", strerror(errno));
+    rb_raise(rb_eRuntimeError, "tmp_flush.flush: %s", strerror(errno));
   return obj;
 }
 
@@ -237,19 +239,19 @@ static VALUE tmp_rewind(int argc, VALUE *argv, VALUE obj)
   
   Data_Get_Struct(obj, Tmpfile, tf);
   if(tf->fp == NULL)
-    rb_raise(rb_eRuntimeError, "File not open!"); //need to change error type.
+    rb_raise(rb_eRuntimeError, "tmp_rewind: File not open!"); //need to change error type.
 
   if(tf->fp != NULL)
     if(argc == 0)
     {
       if(fseek(tf->fp, 0, SEEK_SET) == -1)  //go back to the start of the file.
-        rb_raise(rb_eRuntimeError, "rewind %s", strerror(errno));
+        rb_raise(rb_eRuntimeError, "tmp_rewind.rewind %s", strerror(errno));
     }
     else
     { //rewind n bytes in the input stream.
       rb_scan_args(argc, argv, "10", &nbytes);
       if(fseek(tf->fp, NUM2INT(nbytes), SEEK_CUR) == -1)
-        rb_raise(rb_eRuntimeError, "rewind %s", strerror(errno));
+        rb_raise(rb_eRuntimeError, "tmp_rewind.rewind %s", strerror(errno));
     }
   return obj;
 }
@@ -309,7 +311,7 @@ static VALUE tmp_to_s(VALUE obj)
   if(tf->fp == NULL)
     fd = -1;
   else
-    fileno(tf->fp);
+    fd = fileno(tf->fp);
   
   sprintf(buffer, "fd = %d filename = \'%s\' flags = \'%s\'", fd, tf->filename, tf->flags);
   return rb_str_new2(buffer); //return the string we just read.
@@ -326,7 +328,7 @@ int error;
 VALUE tmp;
 
   if(argc == 0)
-        rb_raise(rb_eRuntimeError, "Need arguments!");
+        rb_raise(rb_eRuntimeError, "tmp_exec: %s", "Need arguments!");
 
   exec_argv = calloc(argc + 1, sizeof(char *));
   for(i = 0; i < argc; i++)
@@ -342,12 +344,12 @@ VALUE tmp;
   if((pid = fork()) == 0) //child
     execv(exec_argv[0], exec_argv);
   else if(pid == -1) //failed
-    rb_raise(rb_eRuntimeError, strerror(errno)); //need to change error type.
+    rb_raise(rb_eRuntimeError, "tmp_exec.exec %s", strerror(errno)); //need to change error type.
   else //Parent
   { int count = 0;
     while((error = wait(&status)) == -1 && errno == EINTR && count < 4) count++ ;
     if(error == -1)
-      rb_raise(rb_eRuntimeError, strerror(errno)); //need to change error type.
+      rb_raise(rb_eRuntimeError, "tmp_exec: %s", strerror(errno)); //need to change error type.
   }
   if(exec_argv != NULL)
           free(exec_argv);
