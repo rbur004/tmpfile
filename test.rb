@@ -11,6 +11,7 @@ t.puts "Hello World"
 =end
 
 TmpFile.open('/tmp/xxx','w+') do |fd|
+  #fd.no_unlink #Uncomment and the test file will not be deleted.
   fd.puts "Hello World #{Time.now}", 10
   fd.print "Another"
   fd.print "Line\n"
