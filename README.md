@@ -1,16 +1,27 @@
+#Tmpfile
+
+Creates temporary files, that get deleted after they are closed (unless no_unlink is set).
+
+##Install
 To make the make file
-%ruby extconf.rb
+ruby extconf.rb
 
 The makefile will have the ruby library path added for the 
 version of ruby used to create the makefile.
 
 To create the ruby library
-%make
+% make
 
-To install
-%make install
+To install in the current ruby instance
+% make install
 
-Example: 
+```
+ruby extconf.rb
+make
+sudo make install
+```
+
+##Example
 	#Create a named temporary file, that gets deleted at the end of the block
 	TmpFile.open('/tmp/xxx','w+') do |fd|
 		...
