@@ -22,6 +22,7 @@ sudo make install
 ```
 
 ##Example
+```
 	#Create a named temporary file, that gets deleted at the end of the block
 	TmpFile.open('/tmp/xxx','w+') do |fd|
 		...
@@ -32,6 +33,7 @@ sudo make install
     	#fd.no_unlink; #For testing, so we can see what was produced.
 		...
 	end
-	
+```
+
 	
 	
