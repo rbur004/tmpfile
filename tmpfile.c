@@ -94,7 +94,7 @@ VALUE nobj = rb_class_new_instance( argc, argv, obj); //new instance of this cla
   return nobj;
 }
 
-static VALUE tmp_each_line(VALUE obj, VALUE filename, VALUE flags)
+static VALUE tmp_each_line(VALUE obj)
 {
   Tmpfile *tf;
   char buffer[8196];
@@ -242,6 +242,7 @@ static VALUE tmp_rewind(int argc, VALUE *argv, VALUE obj)
     rb_raise(rb_eRuntimeError, "tmp_rewind: File not open!"); //need to change error type.
 
   if(tf->fp != NULL)
+  {
     if(argc == 0)
     {
       if(fseek(tf->fp, 0, SEEK_SET) == -1)  //go back to the start of the file.
@@ -253,6 +254,7 @@ static VALUE tmp_rewind(int argc, VALUE *argv, VALUE obj)
       if(fseek(tf->fp, NUM2INT(nbytes), SEEK_CUR) == -1)
         rb_raise(rb_eRuntimeError, "tmp_rewind.rewind %s", strerror(errno));
     }
+  }
   return obj;
 }
 
@@ -371,8 +373,8 @@ void Init_tmpfile()
 
   //Class methods
   rb_define_module_function(myClass, "open", tmp_open, -1); //2 args, but easier to code as optional.
-	rb_define_module_function(myClass, "exec", tmp_exec, -1);
-	
+  rb_define_module_function(myClass, "exec", tmp_exec, -1);
+
   //methods
   rb_define_method(myClass, "each_line", tmp_each_line, 0);
   rb_define_method(myClass, "gets", tmp_gets, 0);
