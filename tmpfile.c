@@ -129,14 +129,14 @@ static VALUE tmp_gets(VALUE obj)
   if(tf->fp == NULL)
     rb_raise(rb_eRuntimeError, "tmp_gets: File not open!"); //need to change error type.
 
-    if(fgets(buffer,8192,tf->fp) == NULL) //read the next line.
-    {
-      if(feof(tf->fp) == 0) //Then we had an io error, rather than eof.
-        rb_raise(rb_eRuntimeError, "tmp_gets: %s", strerror(errno)); //need to change error type.
-      else
-        return Qnil; //nothing more to read.
-    }
-    return rb_str_new2(buffer); //return the string we just read.
+  if(fgets(buffer,8192,tf->fp) == NULL) //read the next line.
+  {
+    if(feof(tf->fp) == 0) //Then we had an io error, rather than eof.
+      rb_raise(rb_eRuntimeError, "tmp_gets: %s", strerror(errno)); //need to change error type.
+    else
+      return Qnil; //nothing more to read.
+  }
+  return rb_str_new2(buffer); //return the string we just read.
 }
 
 //Mimic Ruby puts, adding a '\n' if the strings don't have one.
@@ -241,15 +241,13 @@ static VALUE tmp_rewind(int argc, VALUE *argv, VALUE obj)
   if(tf->fp == NULL)
     rb_raise(rb_eRuntimeError, "tmp_rewind: File not open!"); //need to change error type.
 
-  if(tf->fp != NULL)
-  {
-    if(argc == 0)
-    {
+  if(tf->fp != NULL){
+    if(argc == 0) {
       if(fseek(tf->fp, 0, SEEK_SET) == -1)  //go back to the start of the file.
         rb_raise(rb_eRuntimeError, "tmp_rewind.rewind %s", strerror(errno));
     }
-    else
-    { //rewind n bytes in the input stream.
+    else {
+      //rewind n bytes in the input stream.
       rb_scan_args(argc, argv, "10", &nbytes);
       if(fseek(tf->fp, NUM2INT(nbytes), SEEK_CUR) == -1)
         rb_raise(rb_eRuntimeError, "tmp_rewind.rewind %s", strerror(errno));
@@ -305,9 +303,10 @@ static VALUE tmp_unlink(VALUE obj)
 
 static VALUE tmp_to_s(VALUE obj)
 {
-  char buffer[256];
+  char *buffer;
   int fd;
   Tmpfile *tf;
+  VALUE rb_string;
 
   Data_Get_Struct(obj, Tmpfile, tf);
   if(tf->fp == NULL)
@@ -315,8 +314,13 @@ static VALUE tmp_to_s(VALUE obj)
   else
     fd = fileno(tf->fp);
 
-  sprintf(buffer, "fd = %d filename = \'%s\' flags = \'%s\'", fd, tf->filename, tf->flags);
-  return rb_str_new2(buffer); //return the string we just read.
+  if((buffer = malloc(strlen(tf->filename) + strlen(tf->flags) + 30)) == NULL)
+    rb_raise(rb_eRuntimeError, "Malloc failed");
+
+  sprintf(buffer, "filename = \'%s\' flags = \'%s\'", tf->filename, tf->flags);
+  rb_string = rb_str_new2(buffer); // return the string we just read.
+  free(buffer); // rb_string is a copy, so we don't need the original.
+  return rb_string;
 }
 
 
@@ -373,7 +377,7 @@ void Init_tmpfile()
 
   //Class methods
   rb_define_module_function(myClass, "open", tmp_open, -1); //2 args, but easier to code as optional.
-  rb_define_module_function(myClass, "exec", tmp_exec, -1);
+	rb_define_module_function(myClass, "exec", tmp_exec, -1);
 
   //methods
   rb_define_method(myClass, "each_line", tmp_each_line, 0);

@@ -23,6 +23,7 @@ sudo make install
 
 ##Example
 ```
+<<<<<<< HEAD
 	#Create a named temporary file, that gets deleted at the end of the block
 	TmpFileMod::TmpFile.open('/tmp/xxx','w+') do |fd|
 		...
@@ -33,4 +34,19 @@ sudo make install
     	#fd.no_unlink; #For testing, so we can see what was produced.
 		...
 	end
+=======
+require 'tmpfile'
+include
+
+# Create a named temporary file, that gets deleted at the end of the block
+TmpFileMod::TmpFile.open('/tmp/xxx','w+') do |fd|
+	...
+end
+
+# For debugging, the delete on close can be disabled.
+TmpFileMod::TmpFile.open('/tmp/xxx','w+') do |fd|
+  #fd.no_unlink; #For testing, so we can see what was produced.
+	...
+end
+>>>>>>> e7d5a5faa8b4f9c353ecc1f35559f6fc12b40761
 ```
