@@ -18,7 +18,7 @@ static VALUE myClass;
 
 static void tmp_mark(Tmpfile *tf)
 {
-  //don't need to do anything.  
+  //don't need to do anything.
 }
 
 static void tmp_free(Tmpfile *tf)
@@ -48,22 +48,22 @@ char *filename_p, *flags_p;
 
   rb_scan_args(argc, argv, "2", &filename, &flags);
   if(TYPE(filename) != T_STRING)
-    rb_raise(rb_eTypeError, "tmp_initialize: Filename should be a String"); 
-    
+    rb_raise(rb_eTypeError, "tmp_initialize: Filename should be a String");
+
   if(TYPE(flags) != T_STRING)
-    rb_raise(rb_eTypeError, "tmp_initialize: Flags should be a String"); 
-    
+    rb_raise(rb_eTypeError, "tmp_initialize: Flags should be a String");
+
   Data_Get_Struct(obj, Tmpfile, tf);
-  
+
   filename_p = StringValuePtr(filename);
   flags_p = StringValuePtr(flags);
   if( ( fp = fopen(filename_p, flags_p)) == NULL)
     rb_raise(rb_eArgError, "tmp_initialize: %s", strerror(errno));
-    
+
   tf->fp = fp;
   strcpy(tf->filename, filename_p);
   strcpy(tf->flags, flags_p);
-  
+
   return obj;
 }
 
@@ -75,7 +75,7 @@ static VALUE tmp_close(VALUE obj)
   if(tf->fp != NULL)
   {
     fclose(tf->fp); //close the file
-    tf->fp = NULL; 
+    tf->fp = NULL;
     if(tf->no_unlink == 0)
       tmp_unlink(obj); //remove the file from disk
   }
@@ -100,7 +100,7 @@ static VALUE tmp_each_line(VALUE obj)
   char buffer[8196];
 
   Data_Get_Struct(obj, Tmpfile, tf);
-  
+
   if(tf->fp == NULL)
     rb_raise(rb_eRuntimeError, "tmp_each_line: File not open!"); //need to change error type.
 
@@ -125,14 +125,14 @@ static VALUE tmp_gets(VALUE obj)
   char buffer[8194];
 
   Data_Get_Struct(obj, Tmpfile, tf);
-  
+
   if(tf->fp == NULL)
     rb_raise(rb_eRuntimeError, "tmp_gets: File not open!"); //need to change error type.
 
     if(fgets(buffer,8192,tf->fp) == NULL) //read the next line.
     {
       if(feof(tf->fp) == 0) //Then we had an io error, rather than eof.
-        rb_raise(rb_eRuntimeError, "tmp_gets: %s", strerror(errno)); //need to change error type. 
+        rb_raise(rb_eRuntimeError, "tmp_gets: %s", strerror(errno)); //need to change error type.
       else
         return Qnil; //nothing more to read.
     }
@@ -145,7 +145,7 @@ static VALUE tmp_puts(int argc, VALUE *argv, VALUE obj)
   Tmpfile *tf;
   int i;
   VALUE tmp;
-  
+
   Data_Get_Struct(obj, Tmpfile, tf);
 
   if(tf->fp == NULL)
@@ -155,14 +155,14 @@ static VALUE tmp_puts(int argc, VALUE *argv, VALUE obj)
   {
     char *s;
     int l;
-    
+
     if(TYPE(argv[i]) == T_STRING)
       s = StringValuePtr(argv[i]);
     else
     { tmp = rb_funcall( argv[i],  rb_intern("to_s"),  0 );
       s = StringValuePtr(tmp);
     }
-    
+
     l = (int)strlen(s);
     //only output if the string isn't empty.
     if(l && fputs(s, tf->fp) == EOF)
@@ -171,7 +171,7 @@ static VALUE tmp_puts(int argc, VALUE *argv, VALUE obj)
     if(l && s[l-1] != '\n' && fputs("\n", tf->fp) == EOF)
       rb_raise(rb_eRuntimeError, "tmp_puts: %s", strerror(errno)); //need to change error type.
   }
-  
+
   return obj;
 }
 
@@ -180,7 +180,7 @@ static VALUE tmp_print(int argc, VALUE *argv, VALUE obj)
   Tmpfile *tf;
   int i;
   VALUE tmp;
-  
+
   Data_Get_Struct(obj, Tmpfile, tf);
 
   if(tf->fp == NULL)
@@ -189,19 +189,19 @@ static VALUE tmp_print(int argc, VALUE *argv, VALUE obj)
   for(i = 0; i < argc; i++)
   {
     char *s;
-    
+
     if(TYPE(argv[i]) == T_STRING)
       s = StringValuePtr(argv[i]);
     else
     { tmp = rb_funcall( argv[i],  rb_intern("to_s"),  0 );
       s = StringValuePtr(tmp);
     }
-    
+
     //only output if the string isn't empty.
     if(s[0] != '\0' && fputs(s, tf->fp) == EOF)
       rb_raise(rb_eRuntimeError, "tmp_print: %s", strerror(errno)); //need to change error type.
   }
-  
+
   return obj;
 }
 
@@ -236,7 +236,7 @@ static VALUE tmp_rewind(int argc, VALUE *argv, VALUE obj)
 {
   Tmpfile *tf;
   VALUE nbytes;
-  
+
   Data_Get_Struct(obj, Tmpfile, tf);
   if(tf->fp == NULL)
     rb_raise(rb_eRuntimeError, "tmp_rewind: File not open!"); //need to change error type.
@@ -293,7 +293,7 @@ static VALUE tmp_unlink(VALUE obj)
   if(tf->filename[0] != '\0')
   {
     unlink(tf->filename); //remove the file from disk
-  
+
     //Forget the name, as the file is now unnamed.
     //i.e. it can only be accessed via the file pointer, not by name.
     //     and it will vanish from the disk once the fp is closed.
@@ -314,7 +314,7 @@ static VALUE tmp_to_s(VALUE obj)
     fd = -1;
   else
     fd = fileno(tf->fp);
-  
+
   sprintf(buffer, "fd = %d filename = \'%s\' flags = \'%s\'", fd, tf->filename, tf->flags);
   return rb_str_new2(buffer); //return the string we just read.
 }
@@ -342,7 +342,7 @@ VALUE tmp;
     }
   }
   exec_argv[i] = NULL;
-  
+
   if((pid = fork()) == 0) //child
     execv(exec_argv[0], exec_argv);
   else if(pid == -1) //failed
@@ -355,7 +355,7 @@ VALUE tmp;
   }
   if(exec_argv != NULL)
           free(exec_argv);
-    
+
   return INT2FIX(status);
 }
 
@@ -364,10 +364,10 @@ void Init_tmpfile()
 {
   // Create a Ruby class in this module.
   // rb_cObject is defined in ruby.h
-  
+
   myModule = rb_define_module("TmpFileMod");
   myClass = rb_define_class_under(myModule, "TmpFile", rb_cObject);
-  rb_define_alloc_func(myClass, tmp_alloc); 
+  rb_define_alloc_func(myClass, tmp_alloc);
 
   rb_define_method(myClass, "initialize", tmp_initialize, -1); //2 args
 
